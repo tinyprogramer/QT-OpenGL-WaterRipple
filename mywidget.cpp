@@ -474,8 +474,9 @@ void MyWidget::paintGL()
     //glDrawArrays(GL_TRIANGLES,0,6);
     //frame_program->release();
     ++cnt;
-
+    //this->drop(500,500,40,0.15);
     this->render();
+
     update();
 }
 
@@ -522,8 +523,42 @@ void MyWidget::mouseMoveEvent(QMouseEvent* ev)
 
 }
 
-void MyWidget::drop(int x,int y,int radius,int strength)
+void MyWidget::mousePressEvent(QMouseEvent *ev)
 {
+
+    qDebug()<<"mouse pressed";
+    //qDebug()<<m_texIndex;
+    this->drop(ev->x(),ev->y(),20,0.1);
+    //this->render();
+}
+
+void MyWidget::drop(int x,int y,int radius,float strength)
+{
+
+    makeCurrent();
+    drop_program->bind();
+
+
+    m_frameBuffers[m_texIndex]->bind();
+    m_globVAO.bind();
+    float px=(float)(2*x-this->width())/this->width(),py=(float)(2*y-this->height())/this->height();
+    float ra=(float)radius/this->width();
+    //qDebug()<<px;
+    //qDebug()<<py;
+    drop_program->setUniformValue("center",px,py);
+    drop_program->setUniformValue("radius",ra);
+    drop_program->setUniformValue("strength",strength);
+    //drop_program->setUniformValue("texture",0);
+    //m_texture2->bind();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    //glBindTexture(GL_TEXTURE_2D,m_texture2->textureId());
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glDrawArrays(GL_TRIANGLES,0,6);
+    m_frameBuffers[m_texIndex]->release();
+    drop_program->release();
+
+    this->swapFrameBuffer();
 
 }
 
@@ -534,8 +569,8 @@ void MyWidget::updateFrame()
 
 void MyWidget::render()
 {
-    m_frameBuffers[m_texIndex]->release();
-
+    //m_frameBuffers[1-m_texIndex]->release();
+    //glBindFramebuffer(GL_FRAMEBUFFER,0);
     render_program->bind();
     render_program->setUniformValue("samplerBackground",0);
     render_program->setUniformValue("samplerRipples",1);

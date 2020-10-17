@@ -19,6 +19,6 @@ void main() {
 	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);
 	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;
 	//gl_FragColor = texture2D(samplerBackground, backgroundCoord+delta) + specular;
-	//gl_FragColor=texture2D(samplerBackground,backgroundCoord);
+	//gl_FragColor=texture2D(samplerRipples,ripplesCoord);
 	//gl_FragColor=mix(texture(samplerBackground, backgroundCoord), texture(samplerRipples, ripplesCoord), 0.5);
 }

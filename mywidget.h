@@ -24,7 +24,7 @@ public:
     MyWidget(QWidget* parent=0);
     ~MyWidget();
     void printcnt();
-    void drop(int x,int y,int radius,int strength);
+    void drop(int x,int y,int radius,float strength);
     void render();
     void updateFrame();
 
@@ -33,6 +33,7 @@ protected:
     void paintGL() override;
     void resizeGL(int width, int height) override;
     virtual void mouseMoveEvent(QMouseEvent* ev);
+    virtual void mousePressEvent(QMouseEvent* ev);
     void swapFrameBuffer();
     void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
 
