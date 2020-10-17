@@ -11,8 +11,9 @@
 #include <QOpenGLTexture>
 #include <QTimer>
 #include <QMouseEvent>
-
-QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
+#include <QOpenGLShaderProgram>
+#include <vector>
+#include <QString>
 
 class MyWidget : public QOpenGLWidget,protected QOpenGLFunctions_3_3_Core
 {
@@ -23,18 +24,24 @@ public:
     MyWidget(QWidget* parent=0);
     ~MyWidget();
     void printcnt();
+    void drop(int x,int y,int radius,int strength);
+    void render();
+    void updateFrame();
 
 protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
     virtual void mouseMoveEvent(QMouseEvent* ev);
+    void swapFrameBuffer();
+    void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
 
 private:
-    QOpenGLShaderProgram* program,* light_program,* frame_program;
-    QOpenGLVertexArrayObject m_vao,m_lightvao,m_framevao;
+    QOpenGLShaderProgram* program,* light_program,* frame_program,*drop_program,*render_program,*update_program;
+    QOpenGLVertexArrayObject m_vao,m_lightvao,m_framevao,m_globVAO;
     QOpenGLFramebufferObject* m_fbo,* tmp_fbo;
-    QOpenGLBuffer m_vbo,m_ebo,ins_vbo,m_framevbo;
+    std::vector<QOpenGLFramebufferObject*> m_frameBuffers;
+    QOpenGLBuffer m_vbo,m_ebo,ins_vbo,m_framevbo,m_globVBO;
     QOpenGLTexture* m_texture;
     QOpenGLTexture* m_texture2;
     QOpenGLFramebufferObjectFormat fmt;
@@ -43,6 +50,8 @@ private:
     bool ready;
     QTimer m_timer;
     int cnt;
+    int m_texIndex;
+    int m_radius;
 
 };
 

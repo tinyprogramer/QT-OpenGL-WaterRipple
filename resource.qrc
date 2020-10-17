@@ -8,5 +8,10 @@
         <file>fbo.frag</file>
         <file>fbo.vert</file>
         <file>img/bg3.jpg</file>
+        <file>glob.vert</file>
+        <file>drop.frag</file>
+        <file>render.vert</file>
+        <file>render.frag</file>
+        <file>update.frag</file>
     </qresource>
 </RCC>

@@ -15,6 +15,15 @@ static GLfloat vertices[]={
     1.0f,-1.0f,0.0f,1.0f,0.0f,
 };
 
+static GLfloat vertArray[]={
+    -1.0,1.0,
+    -1.0,-1.0,
+    1.0,-1.0,
+    1.0,1.0,
+    -1.0,1.0,
+    1.0,-1.0
+};
+
 //static GLfloat vertices[] = {
 //    // 位置              // 颜色
 //     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // 右下
@@ -110,6 +119,8 @@ MyWidget::MyWidget(QWidget* parent)
     this->setMouseTracking(true);
     m_timer.setInterval(1000);
     m_timer.start();
+    m_texIndex=0;
+    m_radius=20;
 }
 
 MyWidget::~MyWidget()
@@ -132,6 +143,11 @@ MyWidget::~MyWidget()
     qDebug()<<"finish";
 }
 
+void MyWidget::swapFrameBuffer()
+{
+    m_texIndex=1-m_texIndex;
+}
+
 void MyWidget::printcnt()
 {
     qDebug()<<cnt;
@@ -145,6 +161,8 @@ void MyWidget::initializeGL()
     //fmt.setSamples(16);
     fmt.setTextureTarget(GL_TEXTURE_2D);
     //fmt.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+
+
 
 
     //glEnable(GL_DEPTH_TEST);
@@ -172,6 +190,39 @@ void MyWidget::initializeGL()
     //fshader->compileSourceCode(fsrc);
 
     // 创建着色器程序
+    m_globVAO.create();
+    m_globVAO.bind();
+
+    m_globVBO.create();
+    m_globVBO.bind();
+
+    m_globVBO.allocate(vertArray,sizeof(vertArray));
+
+    drop_program=new QOpenGLShaderProgram;
+    initProgram(":/glob.vert",":/drop.frag",drop_program);
+    drop_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
+    drop_program->enableAttributeArray("vertex");
+
+    render_program=new QOpenGLShaderProgram;
+    initProgram(":/render.vert",":/render.frag",render_program);
+    qDebug()<<"vert location "<<render_program->attributeLocation("vert");
+    render_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
+    render_program->enableAttributeArray("vertex");
+    //render_program->setUniformValue("samplerBackground",0);
+    //render_program->setUniformValue("samplerRipples",1);
+    //render_program->setUniformValue("perturbance",(GLfloat)0.04);
+    //GLfloat deltx=1.0/this->width(),delty=1.0/this->height();
+    //qDebug()<<deltx<<" "<<delty;
+    //render_program->setUniformValue("delta",deltx,delty);
+
+    update_program=new QOpenGLShaderProgram;
+    initProgram(":/glob.vert",":/update.frag",update_program);
+    update_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
+    update_program->enableAttributeArray("vertex");
+
+    m_globVAO.release();
+    m_globVBO.release();
+
     program = new QOpenGLShaderProgram;
     if(!program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/tgl.vert"))
     {
@@ -330,6 +381,19 @@ void MyWidget::initializeGL()
     m_framevbo.release();
 
 
+    m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
+    //int a[this->width()][this->height()]={0};
+    m_frameBuffers[0]->bind();
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    m_frameBuffers[0]->release();
+    m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
+    m_frameBuffers[1]->bind();
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    m_frameBuffers[1]->release();
 
     m_fbo=new QOpenGLFramebufferObject(this->size(),fmt);
     tmp_fbo=new QOpenGLFramebufferObject(this->size());
@@ -345,73 +409,73 @@ void MyWidget::paintGL()
 {
 
     //glViewport(0,0,this->width(),this->height());
-    m_fbo->bind();
-    //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    //m_fbo->addColorAttachment(this->size());
-
-    //m_fbo->addColorAttachment(width(),height());
-
-    //int w=(float)(m_fbo->width())/(float)(this->width())*m_fbo->width();
-    //int h=(float)(m_fbo->height())/(float)(this->height())*m_fbo->height();
-    //qDebug()<<w<<"  "<<h;
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width(),this->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_fbo->width(),m_fbo->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    //glBindTexture(GL_TEXTURE_2D,m_fbo->texture());
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-    m_vao.bind();
-
-    program->bind();
-    m_texture->bind(0);
-    m_texture2->bind(1);
-    //glBindTexture(GL_TEXTURE_2D,0);
-    glDrawArrays(GL_TRIANGLES,0,6);
-
-    m_vao.release();
-    program->release();
-
-    //QOpenGLFramebufferObject::bindDefault();
-    if(m_fbo->release())
-    {
-        //qDebug()<<"success";
-    }
-    //tmp_fbo->addColorAttachment(this->size());
-
-    //QRect r1(0,0,this->width(),this->height()),r2(0,0,this->width(),this->height());
-    //tmp_fbo=new QOpenGLFramebufferObject(this->size());
-    //QRect r1(0,0,tmp_fbo->width(),tmp_fbo->height()),r2(0,0,m_fbo->width(),m_fbo->height());
-    QOpenGLFramebufferObject::blitFramebuffer(tmp_fbo,m_fbo);
-    //tmp_fbo->release();
-    //qDebug()<<m_fbo->size();
-    //qDebug()<<tmp_fbo->size();
- // 返回默认
-    //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-
-    frame_program->bind();
-    m_framevao.bind();
-
-    //frame_program->setUniformValue("screenTexture",m_fbo->texture());
-    //glBindTexture(GL_TEXTURE_2D,m_fbo->texture());
-
-    //m_texture2->bind(0);
-    //frame_program->setUniformValue("screenTexture",tmp_fbo->texture());
-    glActiveTexture(GL_TEXTURE0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width(),this->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_fbo->width(),m_fbo->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D,tmp_fbo->texture());
+    //m_fbo->bind();
+    ////glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    ////m_fbo->addColorAttachment(this->size());
+    //
+    ////m_fbo->addColorAttachment(width(),height());
+    //
+    ////int w=(float)(m_fbo->width())/(float)(this->width())*m_fbo->width();
+    ////int h=(float)(m_fbo->height())/(float)(this->height())*m_fbo->height();
+    ////qDebug()<<w<<"  "<<h;
+    ////glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width(),this->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    ////glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_fbo->width(),m_fbo->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    ////glBindTexture(GL_TEXTURE_2D,m_fbo->texture());
+    //
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    //m_vao.bind();
+    //
+    //program->bind();
+    //m_texture->bind(0);
     //m_texture2->bind(1);
-    //glBindTexture(GL_TEXTURE_2D,1);
-    //glBindTexture(GL_TEXTURE_2D,0);
-
-
-    //glBindTexture(GL_TEXTURE_2D,0);
-    //glBindFramebuffer(GL_FRAMEBUFFER,0);
-    glDrawArrays(GL_TRIANGLES,0,6);
-    frame_program->release();
+    ////glBindTexture(GL_TEXTURE_2D,0);
+    //glDrawArrays(GL_TRIANGLES,0,6);
+    //
+    //m_vao.release();
+    //program->release();
+    //
+    ////QOpenGLFramebufferObject::bindDefault();
+    //if(m_fbo->release())
+    //{
+    //    //qDebug()<<"success";
+    //}
+    ////tmp_fbo->addColorAttachment(this->size());
+    //
+    ////QRect r1(0,0,this->width(),this->height()),r2(0,0,this->width(),this->height());
+    ////tmp_fbo=new QOpenGLFramebufferObject(this->size());
+    ////QRect r1(0,0,tmp_fbo->width(),tmp_fbo->height()),r2(0,0,m_fbo->width(),m_fbo->height());
+    //QOpenGLFramebufferObject::blitFramebuffer(tmp_fbo,m_fbo);
+    ////tmp_fbo->release();
+    ////qDebug()<<m_fbo->size();
+    ////qDebug()<<tmp_fbo->size();
+ // //返回默认
+    ////glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    //
+    //frame_program->bind();
+    //m_framevao.bind();
+    //
+    ////frame_program->setUniformValue("screenTexture",m_fbo->texture());
+    ////glBindTexture(GL_TEXTURE_2D,m_fbo->texture());
+    //
+    ////m_texture2->bind(0);
+    ////frame_program->setUniformValue("screenTexture",tmp_fbo->texture());
+    //glActiveTexture(GL_TEXTURE0);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width(),this->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    ////glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_fbo->width(),m_fbo->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    //glBindTexture(GL_TEXTURE_2D,tmp_fbo->texture());
+    ////m_texture2->bind(1);
+    ////glBindTexture(GL_TEXTURE_2D,1);
+    ////glBindTexture(GL_TEXTURE_2D,0);
+    //
+    //
+    ////glBindTexture(GL_TEXTURE_2D,0);
+    ////glBindFramebuffer(GL_FRAMEBUFFER,0);
+    //glDrawArrays(GL_TRIANGLES,0,6);
+    //frame_program->release();
     ++cnt;
 
-
+    this->render();
     update();
 }
 
@@ -435,9 +499,64 @@ void MyWidget::resizeGL(int width, int height)
     //m_fbo=new QOpenGLFramebufferObject(this->size(),fmt);
 }
 
+void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
+    if(!pro->addShaderFromSourceFile(QOpenGLShader::Vertex,vert))
+    {
+        qDebug()<< vert<<(pro->log());
+        return;
+    }
+    if(!pro->addShaderFromSourceFile(QOpenGLShader::Fragment,frag))
+    {
+        qDebug()<< vert<<(pro->log());
+        return;
+    }
+    if(!pro->link())
+    {
+        qDebug()<<vert<< (pro->log());
+        return;
+    }
+}
+
 void MyWidget::mouseMoveEvent(QMouseEvent* ev)
 {
-    qDebug()<<"test";
-    qDebug()<<ev->x();
-    qDebug()<<ev->y();
+
+}
+
+void MyWidget::drop(int x,int y,int radius,int strength)
+{
+
+}
+
+void MyWidget::updateFrame()
+{
+
+}
+
+void MyWidget::render()
+{
+    m_frameBuffers[m_texIndex]->release();
+
+    render_program->bind();
+    render_program->setUniformValue("samplerBackground",0);
+    render_program->setUniformValue("samplerRipples",1);
+    render_program->setUniformValue("perturbance",(GLfloat)0.04);
+    GLfloat deltx=1.0/this->width(),delty=1.0/this->height();
+    render_program->setUniformValue("delta",deltx,delty);
+    m_globVAO.bind();
+    //glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
+    glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
+    //m_texture->bind(1);
+    glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
+    //m_texture2->bind(0);
+    glDrawArrays(GL_TRIANGLES,0,6);
+    render_program->release();
+
+  //  program->bind();
+  //  m_vao.bind();
+  //  m_texture->bind();
+  //  glDrawArrays(GL_TRIANGLES,0,6);
+  //  program->release();
 }
