@@ -21,7 +21,7 @@ float average = (
 ) * 0.25;
 
 info.g += (average - info.r) * 2.0;
-info.g *= 0.99;
+info.g *= 0.995;
 info.r += info.g;
 
 gl_FragColor = info;

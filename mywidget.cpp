@@ -555,15 +555,15 @@ void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
 
 void MyWidget::mouseMoveEvent(QMouseEvent* ev)
 {
-
+    this->drop(ev->x(),ev->y(),20,0.01);
 }
 
 void MyWidget::mousePressEvent(QMouseEvent *ev)
 {
 
-    qDebug()<<"mouse pressed";
+    //qDebug()<<"mouse pressed";
     //qDebug()<<m_texIndex;
-    this->drop(ev->x(),ev->y(),40,0.05);
+    this->drop(ev->x(),ev->y(),30,0.1);
     //this->render();
 }
 
