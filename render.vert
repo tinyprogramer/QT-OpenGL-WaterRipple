@@ -1,5 +1,3 @@
-
-
 precision highp float;
 
 attribute vec2 vertex;
