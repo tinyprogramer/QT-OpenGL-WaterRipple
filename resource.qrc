@@ -1,10 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>tgl.vert</file>
-        <file>tgl.frag</file>
-        <file>light.frag</file>
-        <file>fbo.frag</file>
-        <file>fbo.vert</file>
         <file>img/bg3.jpg</file>
         <file>glob.vert</file>
         <file>drop.frag</file>
