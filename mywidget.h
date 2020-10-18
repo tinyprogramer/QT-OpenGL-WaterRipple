@@ -9,7 +9,6 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLTexture>
-#include <QTimer>
 #include <QMouseEvent>
 #include <QOpenGLShaderProgram>
 #include <vector>
@@ -38,20 +37,12 @@ protected:
     void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
 
 private:
-    QOpenGLShaderProgram* program,* light_program,* frame_program,*drop_program,*render_program,*update_program;
-    QOpenGLVertexArrayObject m_vao,m_lightvao,m_framevao,m_globVAO;
-    QOpenGLFramebufferObject* m_fbo,* tmp_fbo;
-    //std::vector<QOpenGLFramebufferObject*> m_frameBuffers;
+    QOpenGLShaderProgram *drop_program,*render_program,*update_program;
+    QOpenGLVertexArrayObject m_globVAO;
+
     std::vector<unsigned int> m_FrameBuffers,m_Textures;
-    QOpenGLBuffer m_vbo,m_ebo,ins_vbo,m_framevbo,m_globVBO;
+    QOpenGLBuffer m_globVBO;
     QOpenGLTexture* m_texture;
-    QOpenGLTexture* m_texture2;
-    QOpenGLFramebufferObjectFormat fmt;
-    int m_attr;
-    int m_color;
-    bool ready;
-    QTimer m_timer;
-    int cnt;
     int m_texIndex;
     int m_radius;
 

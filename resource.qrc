@@ -2,8 +2,6 @@
     <qresource prefix="/">
         <file>tgl.vert</file>
         <file>tgl.frag</file>
-        <file>img/bg2.jpg</file>
-        <file>img/t2.jpg</file>
         <file>light.frag</file>
         <file>fbo.frag</file>
         <file>fbo.vert</file>
