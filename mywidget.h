@@ -15,7 +15,7 @@
 #include <vector>
 #include <QString>
 
-class MyWidget : public QOpenGLWidget,protected QOpenGLFunctions_3_3_Core
+class MyWidget : public QOpenGLWidget,protected QOpenGLFunctions
 {
 
     Q_OBJECT
@@ -41,7 +41,7 @@ private:
     QOpenGLShaderProgram* program,* light_program,* frame_program,*drop_program,*render_program,*update_program;
     QOpenGLVertexArrayObject m_vao,m_lightvao,m_framevao,m_globVAO;
     QOpenGLFramebufferObject* m_fbo,* tmp_fbo;
-    std::vector<QOpenGLFramebufferObject*> m_frameBuffers;
+    //std::vector<QOpenGLFramebufferObject*> m_frameBuffers;
     std::vector<unsigned int> m_FrameBuffers,m_Textures;
     QOpenGLBuffer m_vbo,m_ebo,ins_vbo,m_framevbo,m_globVBO;
     QOpenGLTexture* m_texture;

@@ -305,7 +305,7 @@ void MyWidget::initializeGL()
     ins_vbo.allocate(ins,sizeof(ins));
     program->setAttributeArray(4,GL_FLOAT,0,3,3*sizeof(GLfloat));
     program->enableAttributeArray(4);
-    glVertexAttribDivisor(4,1);
+    //glVertexAttribDivisor(4,1);
     ins_vbo.release();
 
     program->release();
@@ -394,7 +394,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGB, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
     qDebug()<<GL_FLOAT;
@@ -419,7 +419,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
     m_FrameBuffers.push_back(fb2);
     m_Textures.push_back(texture2);
@@ -610,7 +610,8 @@ void MyWidget::updateFrame()
     //qDebug()<<dx<<" "<<dy;
     update_program->setUniformValue("delta",dx,dy);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+
     glActiveTexture(GL_TEXTURE0);
     //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
     //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
@@ -619,6 +620,7 @@ void MyWidget::updateFrame()
     glDrawArrays(GL_TRIANGLES,0,6);
     update_program->release();
     //m_frameBuffers[1-m_texIndex]->release();
+    glBindFramebuffer(GL_FRAMEBUFFER,defaultFramebufferObject());
     this->swapFrameBuffer();
 }
 
