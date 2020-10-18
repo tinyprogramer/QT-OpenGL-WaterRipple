@@ -394,7 +394,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
     qDebug()<<GL_FLOAT;
@@ -419,7 +419,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
     m_FrameBuffers.push_back(fb2);
     m_Textures.push_back(texture2);
@@ -505,7 +505,7 @@ void MyWidget::paintGL()
     //frame_program->release();
     ++cnt;
     //this->drop(500,500,40,0.15);
-    if(cnt%10==0)
+    //if(cnt%10==0)
     {
         this->updateFrame();
     }
@@ -641,7 +641,7 @@ void MyWidget::render()
     //glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
     //m_texture->bind(1);
     //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
-    glBindTexture(GL_TEXTURE_2D,m_Textures[0]);
+    glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
     //m_texture2->bind(0);
