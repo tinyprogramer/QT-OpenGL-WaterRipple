@@ -381,30 +381,49 @@ void MyWidget::initializeGL()
     m_framevbo.release();
 
 
-    m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
+    //m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
     //int a[this->width()][this->height()]={0};
-    m_frameBuffers[0]->bind();
-    unsigned int texture1;
+    //m_frameBuffers[0]->bind();
+    unsigned int texture1,texture2,fb1,fb2;
+    glGenFramebuffers(1,&fb1);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb1);
     glGenTextures(1, &texture1);
+
     glBindTexture(GL_TEXTURE_2D, texture1);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
     qDebug()<<GL_FLOAT;
-    m_frameBuffers[0]->release();
-    m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
-    m_frameBuffers[1]->bind();
-    unsigned int texture2;
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+    {
+        qDebug()<<"framebuffer valid";
+    }else{
+        qDebug()<<"framebuffer not valid";
+    }
+    m_FrameBuffers.push_back(fb1);
+    m_Textures.push_back(texture1);
+    //m_frameBuffers[0]->release();
+    //m_frameBuffers.push_back(new QOpenGLFramebufferObject(this->size(),fmt));
+    //m_frameBuffers[1]->bind();
+    //unsigned int texture2;
+    glGenFramebuffers(1,&fb2);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb2);
     glGenTextures(1, &texture2);
+
     glBindTexture(GL_TEXTURE_2D, texture2);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
-    m_frameBuffers[1]->release();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
+    m_FrameBuffers.push_back(fb2);
+    m_Textures.push_back(texture2);
+    //m_frameBuffers[1]->release();
 
     m_fbo=new QOpenGLFramebufferObject(this->size(),fmt);
     tmp_fbo=new QOpenGLFramebufferObject(this->size());
@@ -555,7 +574,8 @@ void MyWidget::drop(int x,int y,int radius,float strength)
     drop_program->bind();
 
 
-    m_frameBuffers[1-m_texIndex]->bind();
+    //m_frameBuffers[1-m_texIndex]->bind();
+    glBindFramebuffer(GL_FRAMEBUFFER,m_FrameBuffers[1-m_texIndex]);
     m_globVAO.bind();
     float px=(float)(2*x-this->width())/this->width(),py=-(float)(2*y-this->height())/this->height();
     float ra=(float)radius/this->width();
@@ -567,11 +587,12 @@ void MyWidget::drop(int x,int y,int radius,float strength)
     //drop_program->setUniformValue("texture",0);
     //m_texture2->bind();
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
     //glBindTexture(GL_TEXTURE_2D,m_texture2->textureId());
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glDrawArrays(GL_TRIANGLES,0,6);
-    m_frameBuffers[1-m_texIndex]->release();
+    //m_frameBuffers[1-m_texIndex]->release();
     drop_program->release();
 
     this->swapFrameBuffer();
@@ -581,7 +602,8 @@ void MyWidget::drop(int x,int y,int radius,float strength)
 void MyWidget::updateFrame()
 {
     makeCurrent();
-    m_frameBuffers[1-m_texIndex]->bind();
+    //m_frameBuffers[1-m_texIndex]->bind();
+    glBindFramebuffer(GL_FRAMEBUFFER,m_FrameBuffers[1-m_texIndex]);
     m_globVAO.bind();
     update_program->bind();
     GLfloat dx=1.0/this->width(),dy=1.0/this->height();
@@ -591,11 +613,12 @@ void MyWidget::updateFrame()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
     glActiveTexture(GL_TEXTURE0);
     //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
-    glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
 
     glDrawArrays(GL_TRIANGLES,0,6);
     update_program->release();
-    m_frameBuffers[1-m_texIndex]->release();
+    //m_frameBuffers[1-m_texIndex]->release();
     this->swapFrameBuffer();
 }
 
@@ -603,6 +626,7 @@ void MyWidget::render()
 {
     //m_frameBuffers[1-m_texIndex]->release();
     //glBindFramebuffer(GL_FRAMEBUFFER,NULL);
+    //qDebug()<<defaultFramebufferObject();
     glBindFramebuffer(GL_FRAMEBUFFER,defaultFramebufferObject());
     render_program->bind();
     render_program->setUniformValue("samplerBackground",0);
@@ -616,7 +640,8 @@ void MyWidget::render()
     glActiveTexture(GL_TEXTURE1);
     //glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
     //m_texture->bind(1);
-    glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    //glBindTexture(GL_TEXTURE_2D,m_frameBuffers[m_texIndex]->texture());
+    glBindTexture(GL_TEXTURE_2D,m_Textures[0]);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
     //m_texture2->bind(0);

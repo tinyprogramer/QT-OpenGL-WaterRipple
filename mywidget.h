@@ -42,6 +42,7 @@ private:
     QOpenGLVertexArrayObject m_vao,m_lightvao,m_framevao,m_globVAO;
     QOpenGLFramebufferObject* m_fbo,* tmp_fbo;
     std::vector<QOpenGLFramebufferObject*> m_frameBuffers;
+    std::vector<unsigned int> m_FrameBuffers,m_Textures;
     QOpenGLBuffer m_vbo,m_ebo,ins_vbo,m_framevbo,m_globVBO;
     QOpenGLTexture* m_texture;
     QOpenGLTexture* m_texture2;
