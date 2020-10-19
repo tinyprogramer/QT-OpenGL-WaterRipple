@@ -1,4 +1,3 @@
-//#version 330 core
 
 attribute vec2 vertex;
 varying vec2 coord;
