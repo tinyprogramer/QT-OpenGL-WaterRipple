@@ -2,7 +2,7 @@
 
 原js特效地址[https://github.com/sirxemic/jquery.ripples](https://github.com/sirxemic/jquery.ripples "Water Ripple")
 
-![image](https://github.com/tinyprogramer/QT-OpenGL-WaterRipple/tree/master/img/ripple.gif)
+![image](https://github.com/tinyprogramer/QT-OpenGL-WaterRipple/blob/master/img/ripple.gif)
 
 
 
