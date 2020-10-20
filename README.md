@@ -4,5 +4,7 @@
 
 ![image](https://github.com/tinyprogramer/QT-OpenGL-WaterRipple/blob/master/img/ripple.gif)
 
+想了解更多可以去我的[CSDN](https://blog.csdn.net/qq_41961619/article/details/109171428)博客
+
 
 
