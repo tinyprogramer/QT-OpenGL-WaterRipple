@@ -5,13 +5,18 @@ uniform sampler2D texture;
 uniform vec2 center;
 uniform float radius;
 uniform float strength;
+uniform float ratio;
 
 varying vec2 coord;
 
 void main() {
 	vec4 info = texture2D(texture, coord);
+	
+	//vec2 v=center * 0.5 + 0.5 - coord;
+	float x=center.x * 0.5 + 0.5 - coord.x;
+	float y=(center.y * 0.5 + 0.5 - coord.y)*ratio;
 
-	float drop = max(0.0, 1.0 - length(center * 0.5 + 0.5 - coord) / radius);
+	float drop = max(0.0, 1.0 - length(vec2(x,y)) / radius);
 	drop = 0.5 - cos(drop * PI) * 0.5;
 		
 	info.r += drop * strength;

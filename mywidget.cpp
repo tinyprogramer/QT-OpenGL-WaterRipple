@@ -18,7 +18,7 @@ MyWidget::MyWidget(QWidget* parent)
     :QOpenGLWidget(parent),m_texture(nullptr)
 {
 
-    this->setFixedSize(1024,1024);
+    //this->setFixedSize(1024,1024);
     this->setMouseTracking(true);
 
     m_texIndex=0;
@@ -89,7 +89,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
 
@@ -125,7 +125,41 @@ void MyWidget::paintGL()
 
 void MyWidget::resizeGL(int width, int height)
 {
+    qDebug()<<this->size();
+    glDeleteFramebuffers(2,m_FrameBuffers.data());
+    glDeleteTextures(2,m_Textures.data());
+    unsigned int texture1,texture2,fb1,fb2;
+    glGenFramebuffers(1,&fb1);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb1);
+    glGenTextures(1, &texture1);
 
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
+
+    m_FrameBuffers.push_back(fb1);
+    m_Textures.push_back(texture1);
+
+    glGenFramebuffers(1,&fb2);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb2);
+    glGenTextures(1, &texture2);
+
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
+
+    m_FrameBuffers.push_back(fb2);
+    m_Textures.push_back(texture2);
 }
 
 void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
@@ -166,10 +200,12 @@ void MyWidget::drop(int x,int y,int radius,float strength)
     m_globVAO.bind();
     float px=(float)(2*x-this->width())/this->width(),py=-(float)(2*y-this->height())/this->height();
     float ra=(float)radius/this->width();
+    GLfloat rate=(GLfloat)this->height()/(GLfloat)this->width();
 
     drop_program->setUniformValue("center",px,py);
     drop_program->setUniformValue("radius",ra);
     drop_program->setUniformValue("strength",strength);
+    drop_program->setUniformValue("ratio",rate);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
@@ -189,8 +225,9 @@ void MyWidget::updateFrame()
     glBindFramebuffer(GL_FRAMEBUFFER,m_FrameBuffers[1-m_texIndex]);
     m_globVAO.bind();
     update_program->bind();
-    GLfloat dx=1.0/this->width(),dy=1.0/this->height();
+    GLfloat dx=2.0/this->width(),dy=2.0/this->height();
 
+    //GLfloat dx=0.0025,dy=0.0025*this->width()/this->height();
     update_program->setUniformValue("delta",dx,dy);
 
     glActiveTexture(GL_TEXTURE0);
@@ -211,7 +248,8 @@ void MyWidget::render()
     render_program->setUniformValue("samplerBackground",0);
     render_program->setUniformValue("samplerRipples",1);
     render_program->setUniformValue("perturbance",(GLfloat)0.04);
-    GLfloat deltx=1.0/this->width(),delty=1.0/this->height();
+    GLfloat deltx=2.0/this->width(),delty=2.0/this->height();
+    //GLfloat deltx=0.0025,delty=0.0025*this->width()/this->height();
     render_program->setUniformValue("delta",deltx,delty);
     m_globVAO.bind();
 

@@ -8,10 +8,11 @@ varying vec2 coord;
 void main() {
 	vec4 info = texture2D(texture, coord);
 
-	//vec2 dx = vec2(delta.x, 0.0);
-	//vec2 dy = vec2(0.0, delta.y);
-	vec2 dx = vec2(0.0025, 0.0);
-	vec2 dy = vec2(0.0, 0.0025);
+	vec2 dx = vec2(delta.x, 0.0);
+	vec2 dy = vec2(0.0, delta.y);
+	//vec2 dx = vec2(0.0025, 0.0);
+	//vec2 dy = vec2(0.0, 0.0025);
+	//vec2 dy = vec2(0.0,0.0025*(delta.y/delta.x));
 
 	float average = (
 		texture2D(texture, coord - dx).r +
