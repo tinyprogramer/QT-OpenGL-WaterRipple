@@ -22,7 +22,9 @@ MyWidget::MyWidget(QWidget* parent)
     this->setMouseTracking(true);
 
     m_texIndex=0;
-    //m_radius=20;
+    m_radius=20;
+    m_strength=0.01;
+    m_resolution=2.0;
 }
 
 MyWidget::~MyWidget()
@@ -113,6 +115,10 @@ void MyWidget::initializeGL()
     m_Textures.push_back(texture2);
 
 
+    m_deltx=m_resolution/this->width();
+    m_delty=m_resolution/this->height();
+    m_aspectratio=(GLfloat)this->height()/(GLfloat)this->width();
+
 }
 
 void MyWidget::paintGL()
@@ -125,7 +131,7 @@ void MyWidget::paintGL()
 
 void MyWidget::resizeGL(int width, int height)
 {
-    qDebug()<<this->size();
+    //qDebug()<<this->size();
     glDeleteFramebuffers(2,m_FrameBuffers.data());
     glDeleteTextures(2,m_Textures.data());
     unsigned int texture1,texture2,fb1,fb2;
@@ -160,6 +166,10 @@ void MyWidget::resizeGL(int width, int height)
 
     m_FrameBuffers.push_back(fb2);
     m_Textures.push_back(texture2);
+
+    m_deltx=m_resolution/this->width();
+    m_delty=m_resolution/this->height();
+    m_aspectratio=(GLfloat)this->height()/(GLfloat)this->width();
 }
 
 void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
@@ -182,12 +192,12 @@ void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
 
 void MyWidget::mouseMoveEvent(QMouseEvent* ev)
 {
-    this->drop(ev->x(),ev->y(),20,0.01);
+    this->drop(ev->x(),ev->y(),m_radius,m_strength);
 }
 
 void MyWidget::mousePressEvent(QMouseEvent *ev)
 {
-    this->drop(ev->x(),ev->y(),30,0.1);
+    this->drop(ev->x(),ev->y(),1.5*m_radius,8*m_strength);
 }
 
 void MyWidget::drop(int x,int y,int radius,float strength)
@@ -200,12 +210,12 @@ void MyWidget::drop(int x,int y,int radius,float strength)
     m_globVAO.bind();
     float px=(float)(2*x-this->width())/this->width(),py=-(float)(2*y-this->height())/this->height();
     float ra=(float)radius/this->width();
-    GLfloat rate=(GLfloat)this->height()/(GLfloat)this->width();
+    //GLfloat rate=(GLfloat)this->height()/(GLfloat)this->width();
 
     drop_program->setUniformValue("center",px,py);
     drop_program->setUniformValue("radius",ra);
     drop_program->setUniformValue("strength",strength);
-    drop_program->setUniformValue("ratio",rate);
+    drop_program->setUniformValue("ratio",m_aspectratio);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
@@ -225,10 +235,12 @@ void MyWidget::updateFrame()
     glBindFramebuffer(GL_FRAMEBUFFER,m_FrameBuffers[1-m_texIndex]);
     m_globVAO.bind();
     update_program->bind();
-    GLfloat dx=2.0/this->width(),dy=2.0/this->height();
+    //GLfloat dx=2.0/this->width(),dy=2.0/this->height();
 
-    //GLfloat dx=0.0025,dy=0.0025*this->width()/this->height();
-    update_program->setUniformValue("delta",dx,dy);
+    update_program->setUniformValue("delta",m_deltx,m_delty);
+
+    //GLfloat dx=1.0/512.0,dy=1.0/512.0;
+    //update_program->setUniformValue("delta",dx,dy);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
@@ -248,9 +260,10 @@ void MyWidget::render()
     render_program->setUniformValue("samplerBackground",0);
     render_program->setUniformValue("samplerRipples",1);
     render_program->setUniformValue("perturbance",(GLfloat)0.04);
-    GLfloat deltx=2.0/this->width(),delty=2.0/this->height();
+    //GLfloat deltx=1.0/512.0,delty=1.0/512.0;
     //GLfloat deltx=0.0025,delty=0.0025*this->width()/this->height();
-    render_program->setUniformValue("delta",deltx,delty);
+    render_program->setUniformValue("delta",m_deltx,m_delty);
+    //render_program->setUniformValue("delta",deltx,delty);
     m_globVAO.bind();
 
     glActiveTexture(GL_TEXTURE1);
@@ -262,4 +275,19 @@ void MyWidget::render()
     glDrawArrays(GL_TRIANGLES,0,6);
     render_program->release();
 
+}
+
+void MyWidget::setRadius(int radius)
+{
+    m_radius=radius;
+}
+
+void MyWidget::setStrength(GLfloat strength)
+{
+    m_strength=strength;
+}
+
+void MyWidget::setResolution(GLfloat resolution)
+{
+    m_resolution=resolution;
 }

@@ -10,8 +10,8 @@ void main() {
 
 	vec2 dx = vec2(delta.x, 0.0);
 	vec2 dy = vec2(0.0, delta.y);
-	//vec2 dx = vec2(0.0025, 0.0);
-	//vec2 dy = vec2(0.0, 0.0025);
+	//vec2 dx = vec2(0.001953125, 0.0);
+	//vec2 dy = vec2(0.0, 0.001953125);
 	//vec2 dy = vec2(0.0,0.0025*(delta.y/delta.x));
 
 	float average = (

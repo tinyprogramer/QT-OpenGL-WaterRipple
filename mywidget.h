@@ -23,8 +23,10 @@ public:
     ~MyWidget();
     void printcnt();
     void drop(int x,int y,int radius,float strength);
-    void render();
-    void updateFrame();
+
+    void setRadius(int radius);
+    void setStrength(GLfloat strength);
+    void setResolution(GLfloat resolution);
 
 protected:
     void initializeGL() override;
@@ -33,6 +35,8 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent* ev);
     virtual void mousePressEvent(QMouseEvent* ev);
     void swapFrameBuffer();
+    void render();
+    void updateFrame();
     void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
 
 private:
@@ -44,6 +48,7 @@ private:
     QOpenGLTexture* m_texture;
     int m_texIndex;
     int m_radius;
+    GLfloat m_deltx,m_delty,m_strength,m_resolution,m_aspectratio;
 
 };
 

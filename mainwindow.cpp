@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     _mywidget=new MyWidget(this);
     ui->gridLayout->addWidget(_mywidget,0,0,1,1);
+    _mywidget->setRadius(20);
+    _mywidget->setStrength(0.01);
+    _mywidget->setResolution(2.0);
     _mywidget->show();
 }
 
