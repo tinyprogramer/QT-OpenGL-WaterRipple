@@ -27,6 +27,8 @@ public:
     void setRadius(int radius);
     void setStrength(GLfloat strength);
     void setResolution(GLfloat resolution);
+    void setDamping(GLfloat damping);
+    void setBackgroundImage(QString filename);
 
 protected:
     void initializeGL() override;
@@ -48,7 +50,8 @@ private:
     QOpenGLTexture* m_texture;
     int m_texIndex;
     int m_radius;
-    GLfloat m_deltx,m_delty,m_strength,m_resolution,m_aspectratio;
+    GLfloat m_deltx,m_delty,m_strength,m_resolution,m_aspectratio,m_damping;
+    QString m_backgroundImg;
 
 };
 

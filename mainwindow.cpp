@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
     _mywidget->setRadius(20);
     _mywidget->setStrength(0.01);
     _mywidget->setResolution(2.0);
+    _mywidget->setDamping(0.995);
+    //_mywidget->setBackgroundImage("E:/github/ripplejs/jquery.ripples/demo/img/bg2.jpg");
+    this->resize(1024,728);
     _mywidget->show();
 }
 

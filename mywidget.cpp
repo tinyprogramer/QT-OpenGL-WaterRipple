@@ -3,6 +3,7 @@
 #include <QOpenGLShaderProgram>
 
 #include <QDebug>
+#include <QFile>
 
 static GLfloat vertArray[]={
     -1.0,1.0,
@@ -25,6 +26,8 @@ MyWidget::MyWidget(QWidget* parent)
     m_radius=20;
     m_strength=0.01;
     m_resolution=2.0;
+    m_damping=0.995;
+    m_backgroundImg=":/img/bg3.jpg";
 }
 
 MyWidget::~MyWidget()
@@ -32,6 +35,7 @@ MyWidget::~MyWidget()
     makeCurrent();
     if(m_texture)
     {
+        m_texture->destroy();
         delete m_texture;
     }
     m_globVAO.destroy();
@@ -78,7 +82,7 @@ void MyWidget::initializeGL()
     m_globVAO.release();
     m_globVBO.release();
 
-    m_texture=new QOpenGLTexture(QImage(":/img/bg3.jpg").mirrored());
+    m_texture=new QOpenGLTexture(QImage(m_backgroundImg).mirrored());
     m_texture->setMagnificationFilter(QOpenGLTexture::Linear);
 
     unsigned int texture1,texture2,fb1,fb2;
@@ -91,7 +95,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
 
@@ -107,7 +111,7 @@ void MyWidget::initializeGL()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
 
@@ -144,7 +148,7 @@ void MyWidget::resizeGL(int width, int height)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
 
@@ -160,7 +164,7 @@ void MyWidget::resizeGL(int width, int height)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2, 0);
 
@@ -238,6 +242,7 @@ void MyWidget::updateFrame()
     //GLfloat dx=2.0/this->width(),dy=2.0/this->height();
 
     update_program->setUniformValue("delta",m_deltx,m_delty);
+    update_program->setUniformValue("damping",m_damping);
 
     //GLfloat dx=1.0/512.0,dy=1.0/512.0;
     //update_program->setUniformValue("delta",dx,dy);
@@ -284,10 +289,42 @@ void MyWidget::setRadius(int radius)
 
 void MyWidget::setStrength(GLfloat strength)
 {
-    m_strength=strength;
+    if(strength>0&&strength<1)
+    {
+        m_strength=strength;
+    }
 }
 
 void MyWidget::setResolution(GLfloat resolution)
 {
-    m_resolution=resolution;
+    if(resolution>0)
+    {
+        m_resolution=resolution;
+    }
+}
+
+void MyWidget::setDamping(GLfloat damping)
+{
+    if(damping>=1||damping<0)
+    {
+        return;
+    }
+    m_damping=damping;
+}
+
+void MyWidget::setBackgroundImage(QString filename)
+{
+    makeCurrent();
+    if(QFile::exists(filename))
+    {
+        m_backgroundImg=filename;
+        if(m_texture)
+        {
+            m_texture->destroy();
+            delete m_texture;
+            m_texture=new QOpenGLTexture(QImage(filename).mirrored());
+
+        }
+
+    }
 }
