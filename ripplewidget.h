@@ -1,5 +1,5 @@
-#ifndef MYWIDGET_H
-#define MYWIDGET_H
+#ifndef RIPPLEWIDGET_H
+#define RIPPLEWIDGET_H
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -13,14 +13,14 @@
 #include <vector>
 #include <QString>
 
-class MyWidget : public QOpenGLWidget,protected QOpenGLFunctions
+class RippleWidget : public QOpenGLWidget,protected QOpenGLFunctions
 {
 
     Q_OBJECT
 
 public:
-    MyWidget(QWidget* parent=0,bool insfilter=true);
-    ~MyWidget();
+    RippleWidget(QWidget* parent=0,bool insfilter=true);
+    ~RippleWidget();
     void printcnt();
     void accEvent(QEvent* ev);
     void drop(int x,int y,int radius,float strength);
@@ -58,4 +58,4 @@ private:
 
 };
 
-#endif // MYWIDGET_H
+#endif // RIPPLEWIDGET_H

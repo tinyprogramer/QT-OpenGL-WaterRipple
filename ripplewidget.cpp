@@ -1,4 +1,4 @@
-#include "mywidget.h"
+#include "ripplewidget.h"
 
 #include <QOpenGLShaderProgram>
 
@@ -15,13 +15,11 @@ static GLfloat vertArray[]={
 };
 
 
-MyWidget::MyWidget(QWidget* parent,bool insfilter)
+RippleWidget::RippleWidget(QWidget* parent,bool insfilter)
     :QOpenGLWidget(parent),m_texture(nullptr)
 {
 
-    //this->setFixedSize(1024,1024);
     this->setMouseTracking(true);
-
 
     if(parent&&insfilter)
     {
@@ -35,7 +33,7 @@ MyWidget::MyWidget(QWidget* parent,bool insfilter)
     m_backgroundImg=":/img/bg3.jpg";
 }
 
-MyWidget::~MyWidget()
+RippleWidget::~RippleWidget()
 {
     makeCurrent();
     if(m_texture)
@@ -50,12 +48,12 @@ MyWidget::~MyWidget()
     doneCurrent();
 }
 
-void MyWidget::swapFrameBuffer()
+void RippleWidget::swapFrameBuffer()
 {
     m_texIndex=1-m_texIndex;
 }
 
-void MyWidget::initializeGL()
+void RippleWidget::initializeGL()
 {
 
     initializeOpenGLFunctions();
@@ -132,7 +130,7 @@ void MyWidget::initializeGL()
 
 }
 
-void MyWidget::paintGL()
+void RippleWidget::paintGL()
 {
     this->updateFrame();
     this->render();
@@ -140,11 +138,12 @@ void MyWidget::paintGL()
     update();
 }
 
-void MyWidget::resizeGL(int width, int height)
+void RippleWidget::resizeGL(int width, int height)
 {
-    //qDebug()<<this->size();
     glDeleteFramebuffers(m_FrameBuffers.size(),m_FrameBuffers.data());
     glDeleteTextures(m_Textures.size(),m_Textures.data());
+    m_FrameBuffers.clear();
+    m_Textures.clear();
     unsigned int texture1,texture2,fb1,fb2;
     glGenFramebuffers(1,&fb1);
     glBindFramebuffer(GL_FRAMEBUFFER,fb1);
@@ -183,7 +182,7 @@ void MyWidget::resizeGL(int width, int height)
     m_aspectratio=(GLfloat)this->height()/(GLfloat)this->width();
 }
 
-void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
+void RippleWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
     if(!pro->addShaderFromSourceFile(QOpenGLShader::Vertex,vert))
     {
         qDebug()<< vert<<(pro->log());
@@ -201,17 +200,17 @@ void MyWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro){
     }
 }
 
-void MyWidget::mouseMoveEvent(QMouseEvent* ev)
+void RippleWidget::mouseMoveEvent(QMouseEvent* ev)
 {
     this->drop(ev->x(),ev->y(),m_radius,m_strength);
 }
 
-void MyWidget::mousePressEvent(QMouseEvent *ev)
+void RippleWidget::mousePressEvent(QMouseEvent *ev)
 {
     this->drop(ev->x(),ev->y(),1.5*m_radius,8*m_strength);
 }
 
-void MyWidget::drop(int x,int y,int radius,float strength)
+void RippleWidget::drop(int x,int y,int radius,float strength)
 {
 
     makeCurrent();
@@ -221,7 +220,6 @@ void MyWidget::drop(int x,int y,int radius,float strength)
     m_globVAO.bind();
     float px=(float)(2*x-this->width())/this->width(),py=-(float)(2*y-this->height())/this->height();
     float ra=(float)radius/this->width();
-    //GLfloat rate=(GLfloat)this->height()/(GLfloat)this->width();
 
     drop_program->setUniformValue("center",px,py);
     drop_program->setUniformValue("radius",ra);
@@ -239,20 +237,16 @@ void MyWidget::drop(int x,int y,int radius,float strength)
 
 }
 
-void MyWidget::updateFrame()
+void RippleWidget::updateFrame()
 {
     makeCurrent();
 
     glBindFramebuffer(GL_FRAMEBUFFER,m_FrameBuffers[1-m_texIndex]);
     m_globVAO.bind();
     update_program->bind();
-    //GLfloat dx=2.0/this->width(),dy=2.0/this->height();
 
     update_program->setUniformValue("delta",m_deltx,m_delty);
     update_program->setUniformValue("damping",m_damping);
-
-    //GLfloat dx=1.0/512.0,dy=1.0/512.0;
-    //update_program->setUniformValue("delta",dx,dy);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
@@ -264,7 +258,7 @@ void MyWidget::updateFrame()
     this->swapFrameBuffer();
 }
 
-void MyWidget::render()
+void RippleWidget::render()
 {
 
     glBindFramebuffer(GL_FRAMEBUFFER,defaultFramebufferObject());
@@ -272,10 +266,8 @@ void MyWidget::render()
     render_program->setUniformValue("samplerBackground",0);
     render_program->setUniformValue("samplerRipples",1);
     render_program->setUniformValue("perturbance",(GLfloat)0.04);
-    //GLfloat deltx=1.0/512.0,delty=1.0/512.0;
-    //GLfloat deltx=0.0025,delty=0.0025*this->width()/this->height();
     render_program->setUniformValue("delta",m_deltx,m_delty);
-    //render_program->setUniformValue("delta",deltx,delty);
+
     m_globVAO.bind();
 
     glActiveTexture(GL_TEXTURE1);
@@ -289,12 +281,12 @@ void MyWidget::render()
 
 }
 
-void MyWidget::setRadius(int radius)
+void RippleWidget::setRadius(int radius)
 {
     m_radius=radius;
 }
 
-void MyWidget::setStrength(GLfloat strength)
+void RippleWidget::setStrength(GLfloat strength)
 {
     if(strength>0&&strength<1)
     {
@@ -302,7 +294,7 @@ void MyWidget::setStrength(GLfloat strength)
     }
 }
 
-void MyWidget::setResolution(GLfloat resolution)
+void RippleWidget::setResolution(GLfloat resolution)
 {
     if(resolution>0)
     {
@@ -310,7 +302,7 @@ void MyWidget::setResolution(GLfloat resolution)
     }
 }
 
-void MyWidget::setDamping(GLfloat damping)
+void RippleWidget::setDamping(GLfloat damping)
 {
     if(damping>=1||damping<0)
     {
@@ -319,7 +311,7 @@ void MyWidget::setDamping(GLfloat damping)
     m_damping=damping;
 }
 
-void MyWidget::setBackgroundImage(QString filename)
+void RippleWidget::setBackgroundImage(QString filename)
 {
     makeCurrent();
     if(QFile::exists(filename))
@@ -336,12 +328,12 @@ void MyWidget::setBackgroundImage(QString filename)
     }
 }
 
-void MyWidget::accEvent(QEvent *ev)
+void RippleWidget::accEvent(QEvent *ev)
 {
     this->event(ev);
 }
 
-bool MyWidget::eventFilter(QObject *watched, QEvent *event)
+bool RippleWidget::eventFilter(QObject *watched, QEvent *event)
 {
     if(event->type()==QEvent::MouseButtonPress||event->type()==QEvent::MouseMove)
     {

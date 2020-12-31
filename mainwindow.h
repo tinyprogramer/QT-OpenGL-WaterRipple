@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-#include "mywidget.h"
+#include "ripplewidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -18,13 +18,11 @@ public:
     ~MainWindow();
 
 protected:
-    //virtual void resizeEvent(QResizeEvent* event);
-    //virtual bool event(QEvent *event);
-    //virtual bool eventFilter(QObject *watched, QEvent *event);
+    virtual bool eventFilter(QObject *watched, QEvent *event);
 
 private:
     Ui::MainWindow *ui;
-    MyWidget* _mywidget;
+    RippleWidget* _ripplewidget;
 };
 
 #endif // MAINWINDOW_H

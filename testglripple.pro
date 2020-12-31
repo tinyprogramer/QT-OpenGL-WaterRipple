@@ -26,11 +26,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    mywidget.cpp
+    ripplewidget.cpp
 
 HEADERS += \
         mainwindow.h \
-    mywidget.h
+    ripplewidget.h
 
 FORMS += \
         mainwindow.ui

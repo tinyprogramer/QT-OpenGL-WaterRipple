@@ -1,15 +1,15 @@
 #include "mainwindow.h"
 #include <QApplication>
-#include <QSurfaceFormat>
+//#include <QSurfaceFormat>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QSurfaceFormat fmt;
+    //QSurfaceFormat fmt;
 
-    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    //fmt.setProfile(QSurfaceFormat::CoreProfile);
     //fmt.setSamples(16);
-    QSurfaceFormat::setDefaultFormat(fmt);
+    //QSurfaceFormat::setDefaultFormat(fmt);
 
     MainWindow w;
     w.show();
