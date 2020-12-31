@@ -19,9 +19,10 @@ class MyWidget : public QOpenGLWidget,protected QOpenGLFunctions
     Q_OBJECT
 
 public:
-    MyWidget(QWidget* parent=0);
+    MyWidget(QWidget* parent=0,bool insfilter=true);
     ~MyWidget();
     void printcnt();
+    void accEvent(QEvent* ev);
     void drop(int x,int y,int radius,float strength);
 
     void setRadius(int radius);
@@ -40,6 +41,8 @@ protected:
     void render();
     void updateFrame();
     void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
+    bool eventFilter(QObject *watched, QEvent *event);
+
 
 private:
     QOpenGLShaderProgram *drop_program,*render_program,*update_program;

@@ -15,13 +15,18 @@ static GLfloat vertArray[]={
 };
 
 
-MyWidget::MyWidget(QWidget* parent)
+MyWidget::MyWidget(QWidget* parent,bool insfilter)
     :QOpenGLWidget(parent),m_texture(nullptr)
 {
 
     //this->setFixedSize(1024,1024);
     this->setMouseTracking(true);
 
+
+    if(parent&&insfilter)
+    {
+        parent->installEventFilter(this);
+    }
     m_texIndex=0;
     m_radius=20;
     m_strength=0.01;
@@ -38,6 +43,8 @@ MyWidget::~MyWidget()
         m_texture->destroy();
         delete m_texture;
     }
+    glDeleteFramebuffers(m_FrameBuffers.size(),m_FrameBuffers.data());
+    glDeleteTextures(m_Textures.size(),m_Textures.data());
     m_globVAO.destroy();
     m_globVBO.destroy();
     doneCurrent();
@@ -136,8 +143,8 @@ void MyWidget::paintGL()
 void MyWidget::resizeGL(int width, int height)
 {
     //qDebug()<<this->size();
-    glDeleteFramebuffers(2,m_FrameBuffers.data());
-    glDeleteTextures(2,m_Textures.data());
+    glDeleteFramebuffers(m_FrameBuffers.size(),m_FrameBuffers.data());
+    glDeleteTextures(m_Textures.size(),m_Textures.data());
     unsigned int texture1,texture2,fb1,fb2;
     glGenFramebuffers(1,&fb1);
     glBindFramebuffer(GL_FRAMEBUFFER,fb1);
@@ -327,4 +334,22 @@ void MyWidget::setBackgroundImage(QString filename)
         }
 
     }
+}
+
+void MyWidget::accEvent(QEvent *ev)
+{
+    this->event(ev);
+}
+
+bool MyWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if(event->type()==QEvent::MouseButtonPress||event->type()==QEvent::MouseMove)
+    {
+        this->event(event);
+    }
+    if(event->type()==QEvent::Resize)
+    {
+        this->resize(this->parentWidget()->size());
+    }
+    return QOpenGLWidget::eventFilter(watched,event);
 }
