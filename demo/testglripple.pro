@@ -26,14 +26,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    ripplewidget.cpp
+    ripplewidget.cpp \
+    dialog.cpp
 
 HEADERS += \
         mainwindow.h \
-    ripplewidget.h
+    ripplewidget.h \
+    dialog.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    dialog.ui
 
 RESOURCES += \
     resource.qrc

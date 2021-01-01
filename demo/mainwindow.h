@@ -17,12 +17,14 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void showDialog();
+
 protected:
     virtual bool eventFilter(QObject *watched, QEvent *event);
 
 private:
     Ui::MainWindow *ui;
-    RippleWidget* _ripplewidget;
+    RippleWidget* m_ripplewidget;
 };
 
 #endif // MAINWINDOW_H
