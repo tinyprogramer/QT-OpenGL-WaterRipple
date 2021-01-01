@@ -41,6 +41,7 @@ protected:
     void render();
     void updateFrame();
     void initProgram(QString vert,QString frag,QOpenGLShaderProgram* pro);
+    void initProgram(const char* vert,const char* frag,QOpenGLShaderProgram* pro);
     bool eventFilter(QObject *watched, QEvent *event);
 
 

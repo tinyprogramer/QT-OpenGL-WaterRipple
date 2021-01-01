@@ -14,6 +14,84 @@ static GLfloat vertArray[]={
     1.0,-1.0
 };
 
+static const char* globVert=
+        "attribute vec2 vertex;\n"
+        "varying vec2 coord;\n"
+        "void main() {\n"
+        "	coord = vertex * 0.5 + 0.5;\n"
+        "	gl_Position = vec4(vertex, 0.0, 1.0);\n"
+        "}\n";
+
+static const char* renderVert=
+        "precision highp float;\n"
+        "attribute vec2 vertex;\n"
+        "varying vec2 ripplesCoord;\n"
+        "varying vec2 backgroundCoord;\n"
+        "void main() {\n"
+        "	backgroundCoord=vertex*0.5+0.5;\n"
+        "	ripplesCoord=backgroundCoord;\n"
+        "	gl_Position = vec4(vertex.x, vertex.y, 0.0, 1.0);\n"
+        "}\n";
+
+static const char* renderFrag=
+        "precision highp float;\n"
+        "uniform sampler2D samplerBackground;\n"
+        "uniform sampler2D samplerRipples;\n"
+        "uniform vec2 delta;\n"
+        "uniform float perturbance;\n"
+        "varying vec2 ripplesCoord;\n"
+        "varying vec2 backgroundCoord;\n"
+        "void main() {\n"
+        "	float height = texture2D(samplerRipples, ripplesCoord).r;\n"
+        "	float heightX = texture2D(samplerRipples, vec2(ripplesCoord.x + delta.x, ripplesCoord.y)).r;\n"
+        "	float heightY = texture2D(samplerRipples, vec2(ripplesCoord.x, ripplesCoord.y + delta.y)).r;\n"
+        "	vec3 dx = vec3(delta.x, heightX - height, 0.0);\n"
+        "	vec3 dy = vec3(0.0, heightY - height, delta.y);\n"
+        "	vec2 offset = -normalize(cross(dy, dx)).xz;\n"
+        "	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);\n"
+        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
+        "}\n";
+
+static const char* updateFrag=
+        "precision highp float;\n"
+        "uniform sampler2D texture;\n"
+        "uniform vec2 delta;\n"
+        "uniform float damping;\n"
+        "varying vec2 coord;\n"
+        "void main() {\n"
+        "	vec4 info = texture2D(texture, coord);\n"
+        "	vec2 dx = vec2(delta.x, 0.0);\n"
+        "	vec2 dy = vec2(0.0, delta.y);\n"
+        "	float average = (\n"
+        "		texture2D(texture, coord - dx).r +\n"
+        "		texture2D(texture, coord - dy).r +\n"
+        "		texture2D(texture, coord + dx).r +\n"
+        "		texture2D(texture, coord + dy).r\n"
+        "	) * 0.25;\n"
+        "	info.g += (average - info.r) * 2.0;\n"
+        "	info.g *= damping;\n"
+        "	info.r += info.g;\n"
+        "	gl_FragColor = info;\n"
+        "}\n";
+
+static const char* dropFrag=
+        "precision highp float;\n"
+        "const float PI = 3.141592653589793;\n"
+        "uniform sampler2D texture;\n"
+        "uniform vec2 center;\n"
+        "uniform float radius;\n"
+        "uniform float strength;\n"
+        "uniform float ratio;\n"
+        "varying vec2 coord;\n"
+        "void main() {\n"
+        "	vec4 info = texture2D(texture, coord);\n"
+        "	float x=center.x * 0.5 + 0.5 - coord.x;\n"
+        "	float y=(center.y * 0.5 + 0.5 - coord.y)*ratio;\n"
+        "	float drop = max(0.0, 1.0 - length(vec2(x,y)) / radius);\n"
+        "	drop = 0.5 - cos(drop * PI) * 0.5;\n"
+        "	info.r += drop * strength;\n"
+        "	gl_FragColor = info;\n"
+        "}\n";
 
 RippleWidget::RippleWidget(QWidget* parent,bool insfilter)
     :QOpenGLWidget(parent),m_texture(nullptr)
@@ -69,18 +147,21 @@ void RippleWidget::initializeGL()
     m_globVBO.allocate(vertArray,sizeof(vertArray));
 
     drop_program=new QOpenGLShaderProgram;
-    initProgram(":/glob.vert",":/drop.frag",drop_program);
+    //initProgram(":/glob.vert",":/drop.frag",drop_program);
+    initProgram(globVert,dropFrag,drop_program);
     drop_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
     drop_program->enableAttributeArray("vertex");
 
     render_program=new QOpenGLShaderProgram;
-    initProgram(":/render.vert",":/render.frag",render_program);
+    //initProgram(":/render.vert",":/render.frag",render_program);
+    initProgram(renderVert,renderFrag,render_program);
     render_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
     render_program->enableAttributeArray("vertex");
 
 
     update_program=new QOpenGLShaderProgram;
-    initProgram(":/glob.vert",":/update.frag",update_program);
+    //initProgram(":/glob.vert",":/update.frag",update_program);
+    initProgram(globVert,updateFrag,update_program);
     update_program->setAttributeBuffer("vertex",GL_FLOAT,0,2,2*sizeof(GL_FLOAT));
     update_program->enableAttributeArray("vertex");
 
@@ -196,6 +277,25 @@ void RippleWidget::initProgram(QString vert,QString frag,QOpenGLShaderProgram* p
     if(!pro->link())
     {
         qDebug()<<vert<< (pro->log());
+        return;
+    }
+}
+
+void RippleWidget::initProgram(const char *vert, const char *frag, QOpenGLShaderProgram *pro)
+{
+    if(!pro->addShaderFromSourceCode(QOpenGLShader::Vertex,vert))
+    {
+        qDebug()<< (pro->log());
+        return;
+    }
+    if(!pro->addShaderFromSourceCode(QOpenGLShader::Fragment,frag))
+    {
+        qDebug()<< (pro->log());
+        return;
+    }
+    if(!pro->link())
+    {
+        qDebug()<< (pro->log());
         return;
     }
 }

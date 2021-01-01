@@ -19,10 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //_ripplewidget->stackUnder(ui->centralWidget);
 
     ui->splitter->widget(0)->setMouseTracking(true);
-    ui->splitter->widget(0)->resize(768,768);
+    ui->splitter->widget(0)->resize(720,720);
 
-    _ripplewidget=new RippleWidget(ui->splitter->widget(0));//
-    _ripplewidget->stackUnder(ui->pushButton_2);//
+    _ripplewidget=new RippleWidget(ui->splitter->widget(0));//if you want the ripplewidget fullfill the mainwindow
+    _ripplewidget->stackUnder(ui->pushButton_2);//you should uncomment other lines above and comment this two lines
 
     _ripplewidget->setRadius(20);
     _ripplewidget->setStrength(0.01);
