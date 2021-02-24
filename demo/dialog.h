@@ -2,7 +2,7 @@
 #define DIALOG_H
 
 #include <QDialog>
-#include <ripplewidget.h>
+#include "ripplewidget.h"
 
 namespace Ui {
 class Dialog;

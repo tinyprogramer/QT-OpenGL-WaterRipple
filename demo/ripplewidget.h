@@ -21,7 +21,6 @@ class RippleWidget : public QOpenGLWidget,protected QOpenGLFunctions
 public:
     RippleWidget(QWidget* parent=0,bool insfilter=true);
     ~RippleWidget();
-    void printcnt();
     void accEvent(QEvent* ev);
     void drop(int x,int y,int radius,float strength);
 

@@ -1,4 +1,4 @@
-#include "ripplewidget.h"
+﻿#include "ripplewidget.h"
 
 #include <QOpenGLShaderProgram>
 
@@ -46,11 +46,15 @@ static const char* renderFrag=
         "	float height = texture2D(samplerRipples, ripplesCoord).r;\n"
         "	float heightX = texture2D(samplerRipples, vec2(ripplesCoord.x + delta.x, ripplesCoord.y)).r;\n"
         "	float heightY = texture2D(samplerRipples, vec2(ripplesCoord.x, ripplesCoord.y + delta.y)).r;\n"
-        "	vec3 dx = vec3(delta.x, heightX - height, 0.0);\n"
-        "	vec3 dy = vec3(0.0, heightY - height, delta.y);\n"
-        "	vec2 offset = -normalize(cross(dy, dx)).xz;\n"
+        "	vec3 dx = vec3(delta.x,  0.0,heightX - height);\n"
+        "	vec3 dy = vec3(0.0, delta.y,heightY - height);\n"
+        "   vec3 normal = normalize(cross(dy,dx));\n"
+        "   vec3 ref = refract(vec3(0.0,0.0,-1.0),-normal,1.0/1.333);\n"
+        "   vec3 ofs = ref*(0.05+height)/dot(vec3(0.0,0.0,-1.0),ref);\n"
+        "	vec2 offset = normalize(cross(dy, dx)).xy;\n"
         "	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);\n"
-        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
+//        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
+        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + ofs.xy) + specular;\n"
         "}\n";
 
 static const char* updateFrag=
@@ -114,6 +118,7 @@ RippleWidget::RippleWidget(QWidget* parent,bool insfilter)
 
 RippleWidget::~RippleWidget()
 {
+    qDebug()<<"~Ripple";
     makeCurrent();
     if(m_texture)
     {
@@ -125,6 +130,7 @@ RippleWidget::~RippleWidget()
     m_globVAO.destroy();
     m_globVBO.destroy();
     doneCurrent();
+    qDebug()<<"~Finish";
 }
 
 void RippleWidget::swapFrameBuffer()
@@ -308,7 +314,7 @@ void RippleWidget::mouseMoveEvent(QMouseEvent* ev)
 
 void RippleWidget::mousePressEvent(QMouseEvent *ev)
 {
-    this->drop(ev->x(),ev->y(),1.5*m_radius,8*m_strength);
+    this->drop(ev->x(),ev->y(),1.5*m_radius,14*m_strength);
 }
 
 void RippleWidget::drop(int x,int y,int radius,float strength)
