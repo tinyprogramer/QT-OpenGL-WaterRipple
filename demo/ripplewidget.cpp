@@ -1,4 +1,4 @@
-﻿#include "ripplewidget.h"
+#include "ripplewidget.h"
 
 #include <QOpenGLShaderProgram>
 
@@ -6,7 +6,16 @@
 #include <QFile>
 #include <QFileInfo>
 
-static GLfloat vertArray[]={
+//"precision highp float;"is supported from GLSL 1.3
+//pay attention to the openGL version in your computer
+
+//if you have shader link errors when runing(rahter than building) the program
+//you may need to add "#version 130" or higher on the beginning of each shader program 
+
+//the algorithm used by update_program is based on wave equation
+//for detail interpret of shaders,you could go to my blog https://blog.csdn.net/qq_41961619/article/details/114074630
+
+static GLfloat vertArray[]={//vertexes of square
     -1.0,1.0,
     -1.0,-1.0,
     1.0,-1.0,
@@ -15,51 +24,49 @@ static GLfloat vertArray[]={
     1.0,-1.0
 };
 
-static const char* globVert=
+static const char* globVert=//vertex shader for drop_program and update_program
         "attribute vec2 vertex;\n"
         "varying vec2 coord;\n"
         "void main() {\n"
-        "	coord = vertex * 0.5 + 0.5;\n"
+        "	coord = vertex * 0.5 + 0.5;\n"//convert coordinate from drawing space [-1,1] to texture space [0,1]
         "	gl_Position = vec4(vertex, 0.0, 1.0);\n"
         "}\n";
 
-static const char* renderVert=
+static const char* renderVert=//vertex shader for render_program
         "precision highp float;\n"
         "attribute vec2 vertex;\n"
-        "varying vec2 ripplesCoord;\n"
+        "varying vec2 ripplesCoord;\n"//in this program ripplesCoord has the same value as backgroundCoord
         "varying vec2 backgroundCoord;\n"
         "void main() {\n"
         "	backgroundCoord=vertex*0.5+0.5;\n"
-        "	ripplesCoord=backgroundCoord;\n"
+        "	ripplesCoord=backgroundCoord;\n"//for convinience,I hold both of them
         "	gl_Position = vec4(vertex.x, vertex.y, 0.0, 1.0);\n"
         "}\n";
 
-static const char* renderFrag=
+static const char* renderFrag=//fragment shader for render_program
         "precision highp float;\n"
-        "uniform sampler2D samplerBackground;\n"
-        "uniform sampler2D samplerRipples;\n"
-        "uniform vec2 delta;\n"
-        "uniform float perturbance;\n"
+        "uniform sampler2D samplerBackground;\n"//background image
+        "uniform sampler2D samplerRipples;\n"//height of water,from framebuffer
+        "uniform vec2 delta;\n"//distance between sample points
+        "uniform float perturbance;\n"//you can regard this value as average height of water surface
         "varying vec2 ripplesCoord;\n"
         "varying vec2 backgroundCoord;\n"
         "void main() {\n"
         "	float height = texture2D(samplerRipples, ripplesCoord).r;\n"
         "	float heightX = texture2D(samplerRipples, vec2(ripplesCoord.x + delta.x, ripplesCoord.y)).r;\n"
         "	float heightY = texture2D(samplerRipples, vec2(ripplesCoord.x, ripplesCoord.y + delta.y)).r;\n"
-        "	vec3 dx = vec3(delta.x,  0.0,heightX - height);\n"
-        "	vec3 dy = vec3(0.0, delta.y,heightY - height);\n"
-        "   vec3 normal = normalize(cross(dy,dx));\n"
-        "   vec3 ref = refract(vec3(0.0,0.0,-1.0),-normal,1.0/1.333);\n"
-        "   vec3 ofs = ref*(0.05+height)/dot(vec3(0.0,0.0,-1.0),ref);\n"
-        "	vec2 offset = normalize(cross(dy, dx)).xy;\n"
-        "	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);\n"
-//        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
-        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + ofs.xy) + specular;\n"
+        "	vec3 dx = vec3(delta.x, heightX - height, 0.0);\n"
+        "	vec3 dy = vec3(0.0, heightY - height, delta.y);\n"
+        "	vec2 offset = -normalize(cross(dy, dx)).xz;\n"//here use "cross" to calculate the normals of water surface 
+		//"offset" is an approximant of real offset result in light refract 
+        "	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);\n"//here simulate light reflect
+		//you can see some wight highlight on the ripple by adding this value
+        "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
         "}\n";
 
-static const char* updateFrag=
+static const char* updateFrag=//fragment shader for update_program
         "precision highp float;\n"
-        "uniform sampler2D texture;\n"
+        "uniform sampler2D texture;\n"//water height from current reading framebuffer
         "uniform vec2 delta;\n"
         "uniform float damping;\n"
         "varying vec2 coord;\n"
@@ -73,28 +80,28 @@ static const char* updateFrag=
         "		texture2D(texture, coord + dx).r +\n"
         "		texture2D(texture, coord + dy).r\n"
         "	) * 0.25;\n"
-        "	info.g += (average - info.r) * 2.0;\n"
-        "	info.g *= damping;\n"
-        "	info.r += info.g;\n"
-        "	gl_FragColor = info;\n"
+        "	info.g += (average - info.r) * 2.0;\n"//here calculate the velocity of water surface in vertical direction for next frame
+        "	info.g *= damping;\n"//multiply with damping so that ripple won't last forever
+        "	info.r += info.g;\n"//water height for next frame 
+        "	gl_FragColor = info;\n"//info.r save height,info.g save velocity
         "}\n";
 
-static const char* dropFrag=
+static const char* dropFrag=//fragment shader for drop_program
         "precision highp float;\n"
         "const float PI = 3.141592653589793;\n"
-        "uniform sampler2D texture;\n"
-        "uniform vec2 center;\n"
-        "uniform float radius;\n"
-        "uniform float strength;\n"
-        "uniform float ratio;\n"
+        "uniform sampler2D texture;\n"//water height from current reading framebuffer
+        "uniform vec2 center;\n"//parameters for ripple
+        "uniform float radius;\n"//
+        "uniform float strength;\n"//
+        "uniform float ratio;\n"//aspect ratio of widget,we need this to create circular rather than oval shaped ripples
         "varying vec2 coord;\n"
         "void main() {\n"
         "	vec4 info = texture2D(texture, coord);\n"
         "	float x=center.x * 0.5 + 0.5 - coord.x;\n"
         "	float y=(center.y * 0.5 + 0.5 - coord.y)*ratio;\n"
-        "	float drop = max(0.0, 1.0 - length(vec2(x,y)) / radius);\n"
-        "	drop = 0.5 - cos(drop * PI) * 0.5;\n"
-        "	info.r += drop * strength;\n"
+        "	float drop = max(0.0, 1.0 - length(vec2(x,y)) / radius);\n"//initial height of the ripple
+        "	drop = 0.5 - cos(drop * PI) * 0.5;\n"//value out of the ripple circle is 0
+        "	info.r += drop * strength;\n"//add ripple
         "	gl_FragColor = info;\n"
         "}\n";
 
@@ -106,7 +113,7 @@ RippleWidget::RippleWidget(QWidget* parent,bool insfilter)
 
     if(parent&&insfilter)
     {
-        parent->installEventFilter(this);
+        parent->installEventFilter(this);//supervision mouse events of parent widget
     }
     m_texIndex=0;
     m_radius=20;
@@ -116,9 +123,8 @@ RippleWidget::RippleWidget(QWidget* parent,bool insfilter)
     m_backgroundImg=":/img/bg3.jpg";
 }
 
-RippleWidget::~RippleWidget()
+RippleWidget::~RippleWidget()//destroy sources about OpenGL
 {
-    qDebug()<<"~Ripple";
     makeCurrent();
     if(m_texture)
     {
@@ -130,13 +136,12 @@ RippleWidget::~RippleWidget()
     m_globVAO.destroy();
     m_globVBO.destroy();
     doneCurrent();
-    qDebug()<<"~Finish";
 }
 
-void RippleWidget::swapFrameBuffer()
+void RippleWidget::swapFrameBuffer()//swap current reading and writting framebuffer
 {
-    m_texIndex=1-m_texIndex;
-}
+    m_texIndex=1-m_texIndex;//only swap the indexes infact 
+}//we should make sure that shaders get latest water height from framebuffer
 
 void RippleWidget::initializeGL()
 {
@@ -175,10 +180,10 @@ void RippleWidget::initializeGL()
     m_globVAO.release();
     m_globVBO.release();
 
-    m_texture=new QOpenGLTexture(QImage(m_backgroundImg).mirrored());
+    m_texture=new QOpenGLTexture(QImage(m_backgroundImg).mirrored());//set background image texture
     m_texture->setMagnificationFilter(QOpenGLTexture::Linear);
 
-    unsigned int texture1,texture2,fb1,fb2;
+    unsigned int texture1,texture2,fb1,fb2;//create reading and writting framebuffers and their texture attachments
     glGenFramebuffers(1,&fb1);
     glBindFramebuffer(GL_FRAMEBUFFER,fb1);
     glGenTextures(1, &texture1);
@@ -186,9 +191,10 @@ void RippleWidget::initializeGL()
     glBindTexture(GL_TEXTURE_2D, texture1);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);//this setting let ripple bound from edge
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, this->width(),this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+	//here we use type GL_FLOAT to save the water height and velocity
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture1, 0);
 
@@ -226,7 +232,7 @@ void RippleWidget::paintGL()
     update();
 }
 
-void RippleWidget::resizeGL(int width, int height)
+void RippleWidget::resizeGL(int width, int height)//when the size of widget changed,delete old framebuffers/textures and create new ones
 {
     glDeleteFramebuffers(m_FrameBuffers.size(),m_FrameBuffers.data());
     glDeleteTextures(m_Textures.size(),m_Textures.data());
@@ -314,10 +320,10 @@ void RippleWidget::mouseMoveEvent(QMouseEvent* ev)
 
 void RippleWidget::mousePressEvent(QMouseEvent *ev)
 {
-    this->drop(ev->x(),ev->y(),1.5*m_radius,14*m_strength);
+    this->drop(ev->x(),ev->y(),1.5*m_radius,8*m_strength);
 }
 
-void RippleWidget::drop(int x,int y,int radius,float strength)
+void RippleWidget::drop(int x,int y,int radius,float strength)//draw with drop_program,add ripples
 {
 
     makeCurrent();
@@ -344,7 +350,7 @@ void RippleWidget::drop(int x,int y,int radius,float strength)
 
 }
 
-void RippleWidget::updateFrame()
+void RippleWidget::updateFrame()//draw with update_program,update water height in framebuffers
 {
     makeCurrent();
 
@@ -365,10 +371,10 @@ void RippleWidget::updateFrame()
     this->swapFrameBuffer();
 }
 
-void RippleWidget::render()
+void RippleWidget::render()//draw with render_program,render the final effect on the screen
 {
 
-    glBindFramebuffer(GL_FRAMEBUFFER,defaultFramebufferObject());
+    glBindFramebuffer(GL_FRAMEBUFFER,defaultFramebufferObject());//bind default framebuffer in QT
     render_program->bind();
     render_program->setUniformValue("samplerBackground",0);
     render_program->setUniformValue("samplerRipples",1);
@@ -378,10 +384,10 @@ void RippleWidget::render()
     m_globVAO.bind();
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);
+    glBindTexture(GL_TEXTURE_2D,m_Textures[m_texIndex]);//water height
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,m_texture->textureId());
+    glBindTexture(GL_TEXTURE_2D,m_texture->textureId());//background image
 
     glDrawArrays(GL_TRIANGLES,0,6);
     render_program->release();
