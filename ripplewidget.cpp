@@ -6,11 +6,9 @@
 #include <QFile>
 #include <QFileInfo>
 
-//"precision highp float;"is supported from GLSL 1.3
+//"precision highp float;"is not supported by some old version of GLSL
 //pay attention to the openGL version in your computer
-
-//if you have shader link errors when runing(rahter than building) the program
-//you may need to add "#version 130" or higher on the beginning of each shader program 
+//it may lead to shader link errors when runing(rahter than building) the program
 
 //the algorithm used by update_program is based on wave equation
 //for detail interpret of shaders,you could go to my blog https://blog.csdn.net/qq_41961619/article/details/114074630
@@ -60,7 +58,7 @@ static const char* renderFrag=//fragment shader for render_program
         "	vec2 offset = -normalize(cross(dy, dx)).xz;\n"//here use "cross" to calculate the normals of water surface 
 		//"offset" is an approximant of real offset result in light refract 
         "	float specular = pow(max(0.0, dot(offset, normalize(vec2(-0.6, 1.0)))), 4.0);\n"//here simulate light reflect
-		//you can see some wight highlight on the ripple by adding this value
+		//you can see some white highlight on the ripple by adding this value
         "	gl_FragColor = texture2D(samplerBackground, backgroundCoord + offset * perturbance) + specular;\n"
         "}\n";
 
