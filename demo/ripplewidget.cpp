@@ -6,9 +6,11 @@
 #include <QFile>
 #include <QFileInfo>
 
-//"precision highp float;"is not supported by some old version of GLSL
-//pay attention to the openGL version in your computer
-//it may lead to shader link errors when runing(rahter than building) the program 
+//"precision highp float;"seems only used in GLSL_ES,I'm not sure about it,and it run well in my computer with NVIDIA ...
+//anyway,I comment it now....
+
+//pay attention to the openGL version in your computer,this style of shader is used before openGL 3.3
+//it may lead to shader link errors when runing(rahter than building) the program
 
 //the algorithm used by update_program is based on wave equation
 //for detail interpret of shaders,you could go to my blog https://blog.csdn.net/qq_41961619/article/details/114074630
@@ -31,7 +33,7 @@ static const char* globVert=//vertex shader for drop_program and update_program
         "}\n";
 
 static const char* renderVert=//vertex shader for render_program
-        "precision highp float;\n"
+//        "precision highp float;\n"
         "attribute vec2 vertex;\n"
         "varying vec2 ripplesCoord;\n"//in this program ripplesCoord has the same value as backgroundCoord
         "varying vec2 backgroundCoord;\n"
@@ -42,7 +44,7 @@ static const char* renderVert=//vertex shader for render_program
         "}\n";
 
 static const char* renderFrag=//fragment shader for render_program
-        "precision highp float;\n"
+//        "precision highp float;\n"
         "uniform sampler2D samplerBackground;\n"//background image
         "uniform sampler2D samplerRipples;\n"//height of water,from framebuffer
         "uniform vec2 delta;\n"//distance between sample points
@@ -63,7 +65,7 @@ static const char* renderFrag=//fragment shader for render_program
         "}\n";
 
 static const char* updateFrag=//fragment shader for update_program
-        "precision highp float;\n"
+//        "precision highp float;\n"
         "uniform sampler2D texture;\n"//water height from current reading framebuffer
         "uniform vec2 delta;\n"
         "uniform float damping;\n"
@@ -85,7 +87,7 @@ static const char* updateFrag=//fragment shader for update_program
         "}\n";
 
 static const char* dropFrag=//fragment shader for drop_program
-        "precision highp float;\n"
+//        "precision highp float;\n"
         "const float PI = 3.141592653589793;\n"
         "uniform sampler2D texture;\n"//water height from current reading framebuffer
         "uniform vec2 center;\n"//parameters for ripple
